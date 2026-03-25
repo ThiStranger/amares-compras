@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Amares · Compras v4</title>
+<title>Amares · Compras v5</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <!-- Supabase JS replaced by direct REST API -->
@@ -786,6 +786,7 @@ async function loadAll(){
     }
 
     setStatus(true,'Modo local · '+PVS.length+' proveedores');
+    const _sbi=document.getElementById('sb-img');if(_sbi)_sbi.src=LPDF;
     upCounts();renderKPI();renderDash();fillPvFil();
 
     // 4. Background Supabase sync — never blocks, never errors the app
@@ -904,7 +905,18 @@ function fillPvFil(){
   if(!s)return;
   s.innerHTML='<option value="">Todos los proveedores</option>'+PVS.map(p=>`<option value="${p.id}">${p.nom}</option>`).join('');
 }
+function getDuplicateIds(){
+  const seen={};const dups=new Set();
+  OCS.forEach(o=>{
+    const tot=o.ls.reduce((s,l)=>s+(+l.q||0)*(+l.p||0),0);
+    const key=o.pv+'|'+Math.round(tot)+'|'+(o.fecha||'');
+    if(seen[key])dups.add(o.id);
+    else seen[key]=o.id;
+  });
+  return dups;
+}
 function renderOC(){
+  const _dups=getDuplicateIds();
   const q=(document.getElementById('oc-q')?.value||'').toLowerCase();
   const fe=document.getElementById('oc-fe')?.value||'';
   const fm=document.getElementById('oc-fm')?.value||'';
@@ -917,11 +929,14 @@ function renderOC(){
   });
   const w=document.getElementById('oc-wrap');if(!w)return;
   if(!list.length){w.innerHTML='<div class="empty"><h3>Sin resultados</h3></div>';return;}
-  w.innerHTML=`<table><thead><tr><th>Número</th><th>Proveedor</th><th>Centro</th><th>Fecha</th><th>Referencia</th><th style="text-align:right">Total</th><th style="text-align:right">≈USD</th><th>Estado</th><th></th></tr></thead><tbody>${list.map(o=>{
+  w.innerHTML=`<table><thead><tr><th>Número</th><th>Proveedor</th><th style="min-width:160px">Artículos</th><th>Centro</th><th>Fecha</th><th>Referencia</th><th style="text-align:right">Total</th><th style="text-align:right">≈USD</th><th>Estado</th><th></th></tr></thead><tbody>${list.map(o=>{
     const mon=o.mon||'USD';const t=totOC(o);const tU=totUSD(o);
-    return`<tr>
-      <td style="font-weight:500;color:var(--ink);white-space:nowrap">${o.num}</td>
+    const _isDup=_dups.has(o.id);
+    const _firstItem=o.ls.length?o.ls[0].d.substring(0,38)+(o.ls[0].d.length>38?'…':''):'';
+    return`<tr style="${_isDup?'background:rgba(230,150,0,.07)':''}}">
+      <td style="font-weight:500;color:var(--ink);white-space:nowrap">${o.num}${_isDup?'<br><span style="font-size:8px;color:#B86A00;background:#FEF3CD;padding:1px 5px;border-radius:3px;white-space:nowrap">⚠ Posible duplicado</span>':''}</td>
       <td onclick="openView('${o.id}')" style="cursor:pointer"><div style="font-weight:500;font-size:11px">${gp(o.pv).nom}</div><div style="font-size:8.5px;color:var(--ink4)">${gp(o.pv).cat}</div></td>
+      <td style="font-size:9.5px;color:var(--ink3)"><span style="font-size:9px;color:var(--ink4);background:var(--sand2);padding:1px 6px;border-radius:4px">${o.ls.length} art.</span>${_firstItem?`<div style="font-size:9px;color:var(--ink4);margin-top:3px;max-width:155px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_firstItem}</div>`:''}</td>
       <td style="font-size:10px;color:var(--ink4)">${o.ctr||'—'}</td>
       <td style="font-size:10.5px;white-space:nowrap">${o.fecha}</td>
       <td style="font-size:10px">${o.cot?`<div style="font-weight:500">${o.cot}</div>`:''}${o.docurl?`<a href="${o.docurl}" target="_blank" class="doc-lnk">↗ Doc</a>`:''}${o.pdf_url?`<a href="${o.pdf_url}" target="_blank" class="doc-lnk" style="background:var(--s-rvbg);color:var(--s-rv)">📄</a>`:''}</td>
@@ -1117,13 +1132,15 @@ function openView(id){
   const o=OCS.find(x=>x.id===id);if(!o)return;viewOC=id;
   const p=gp(o.pv);const mon=o.mon||'USD';
   document.getElementById('mv-t').textContent=o.num;
+  const _isDupView=getDuplicateIds().has(id);
   document.getElementById('mv-badges').innerHTML=`
     <span class="badge ${EC[o.est]||'b-d'}">${EL[o.est]||o.est}</span>
     <span class="cx ${MCLS[mon]||'cx-usd'}">${mon}</span>
     <span style="font-size:10px;color:var(--ink4)">${p.nom}</span>
     ${o.cot?`<span style="font-size:9.5px;color:var(--ink4);background:var(--sand2);padding:1px 7px;border-radius:4px">${o.cot}</span>`:''}
     ${o.docurl?`<a href="${o.docurl}" target="_blank" class="doc-lnk">↗ Doc</a>`:''}
-    ${o.pdf_url?`<a href="${o.pdf_url}" target="_blank" class="doc-lnk" style="background:var(--s-rvbg);color:var(--s-rv)">📄 PDF</a>`:''}`;
+    ${o.pdf_url?`<a href="${o.pdf_url}" target="_blank" class="doc-lnk" style="background:var(--s-rvbg);color:var(--s-rv)">📄 PDF</a>`:''}
+    ${_isDupView?`<span style="font-size:8.5px;color:#B86A00;background:#FEF3CD;padding:2px 8px;border-radius:4px;font-weight:500">⚠ Posible orden duplicada — mismo proveedor, monto y fecha</span>`:''}`;
   const steps=['borrador','aprobada','enviada','recibida'];
   const isCan=o.est==='cancelada';const ci=steps.indexOf(o.est);
   let fl=`<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><div class="ef" style="flex:1">`;
@@ -1200,14 +1217,16 @@ function buildDoc(o){
       </div>
     </div>
     ${o.notas?`<div class="pdf-note"><strong>Notas:</strong> ${o.notas}</div>`:''}
+    <div style="font-size:7px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:8px;font-weight:500">Artículos solicitados</div>
     <table class="ptbl">
-      <thead><tr><th style="width:24px">#</th><th>Descripción del producto / servicio</th><th style="text-align:center;width:44px">Cant.</th><th style="text-align:center;width:44px">Unid.</th><th style="text-align:right;width:90px">P. Unitario</th><th style="text-align:right;width:90px">Subtotal</th></tr></thead>
+      <thead><tr><th style="width:24px">#</th><th>Descripción del producto / servicio</th><th style="text-align:center;width:52px">Cantidad</th><th style="text-align:center;width:44px">Unid.</th><th style="text-align:right;width:96px">P. Unitario</th><th style="text-align:right;width:96px">Precio Total</th></tr></thead>
       <tbody>${o.ls.map((l,i)=>{
         const lm=l.curr||mon;const lsym=MSYM[lm]||lm+' ';const sv=(+l.q||0)*(+l.p||0);
         return`<tr><td style="color:#666">${i+1}</td><td>${l.d}</td><td style="text-align:center">${l.q}</td><td style="text-align:center">${l.u}</td><td style="text-align:right;white-space:nowrap">${lsym}${(+l.p||0).toLocaleString('es-DO',{minimumFractionDigits:2})}</td><td style="text-align:right;white-space:nowrap;font-weight:500">${lsym}${sv.toLocaleString('es-DO',{minimumFractionDigits:2})}</td></tr>`;
       }).join('')}</tbody>
     </table>
     <div class="ptot-b">
+      <div class="ptr" style="font-size:9px;color:#999;padding-bottom:5px;border-bottom:1px solid #E0DDD7;margin-bottom:3px"><span>${o.ls.length} artículo${o.ls.length!==1?'s':''}</span><span></span></div>
       <div class="ptr"><span>Subtotal (${mon})</span><span>${sym}${s.toLocaleString('es-DO',{minimumFractionDigits:2})}</span></div>
       <div class="ptr"><span>ITBIS 18%</span><span>${sym}${it.toLocaleString('es-DO',{minimumFractionDigits:2})}</span></div>
       <div class="ptr grand"><span>Total ${mon}</span><span>${sym}${t.toLocaleString('es-DO',{minimumFractionDigits:2})}</span></div>
