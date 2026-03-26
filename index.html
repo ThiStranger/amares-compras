@@ -707,7 +707,15 @@ function lsSet(t,d){try{localStorage.setItem(LS_KEYS[t],JSON.stringify(d));}catc
 function mergeById(local,remote){
   const m={};
   local.forEach(r=>{m[r.id]=r;});
-  remote.forEach(r=>{m[r.id]={...(m[r.id]||{}),...r};});
+  remote.forEach(r=>{
+    const loc=m[r.id]||{};
+    const merged={...loc,...r};
+    // Keep local array ls over remote string ls (protects migrations)
+    if(Array.isArray(loc.ls)&&typeof r.ls==='string'){merged.ls=loc.ls;}
+    // Keep local named pv over remote numeric pv
+    if(loc.pv&&!/^pv\d+$/.test(loc.pv)&&r.pv&&/^pv\d+$/.test(r.pv)){merged.pv=loc.pv;}
+    m[r.id]=merged;
+  });
   return Object.values(m);
 }
 
@@ -863,7 +871,7 @@ async function loadAll(){
     const storedVer=localStorage.getItem('amares_seed_ver')||'0';
     if(!OCS.length){
       OCS=OCS_SEED.map(o=>{const ls=(typeof o.ls==='string'?JSON.parse(o.ls):(o.ls||[])).map(l=>({d:l.d||'',q:+(l.q||l.qty||0),u:l.u||'Und',p:+(l.p||l.pu||0),desc:+(l.desc||0)}));return{...o,ls};});
-      lsSet('ordenes',OCS_SEED);
+      lsSet('ordenes',OCS);
       localStorage.setItem('amares_seed_ver',SEED_VERSION);
       notif(OCS_SEED.length+' órdenes de referencia cargadas ✓','warn');
     } else if(storedVer!==SEED_VERSION){
@@ -911,8 +919,11 @@ async function sbPullAndMerge(){
     if(pvR.length){PVS=mergeById(lsGet('proveedores'),pvR);lsSet('proveedores',PVS);changed=true;}
     if(ocR.length){
       const merged=mergeById(lsGet('ordenes'),ocR);
+      const _SP={"oc_007":[{"d":"Kayak inflable (paddle, bomba, mochila)","q":20,"u":"Und","p":99.0,"curr":"USD"},{"d":"Asiento para kayak","q":20,"u":"Und","p":15.0,"curr":"USD"},{"d":"Paddle adicional","q":8,"u":"Und","p":12.0,"curr":"USD"},{"d":"Kit de snorkel completo","q":30,"u":"Und","p":14.0,"curr":"USD"},{"d":"Placa de impresion logo en kayaks","q":1,"u":"Und","p":55.0,"curr":"USD"},{"d":"Flete maritimo internacional","q":1,"u":"Und","p":950.0,"curr":"USD"},{"d":"Comision bancaria","q":1,"u":"Und","p":30.0,"curr":"USD"}],"oc_008":[{"d":"Bicicleta electrica FX1","q":4,"u":"Und","p":530.0,"curr":"USD"},{"d":"Bicicleta electrica FX2","q":4,"u":"Und","p":530.0,"curr":"USD"},{"d":"Flete maritimo","q":1,"u":"Und","p":265.0,"curr":"USD"}],"oc_046":[{"d":"Membrana osmosis inversa c/ variador y bomba 7.5 HP","q":1,"u":"Und","p":480000.0,"curr":"DOP"},{"d":"Bomba multietapas vertical 5.5 HP","q":1,"u":"Und","p":68000.0,"curr":"DOP"},{"d":"Tanque precargado grado alimenticio 120 Gls","q":1,"u":"Und","p":160000.0,"curr":"DOP"},{"d":"Sistema de ozono completo para agua de osmosis","q":1,"u":"Und","p":65000.0,"curr":"DOP"}],"oc_047":[{"d":"Tanque fibra de vidrio 16x65 boca 4 pulg","q":1,"u":"Und","p":10325.0,"curr":"DOP"},{"d":"Valvula Clack 1.5 pulg para filtro","q":1,"u":"Und","p":38375.0,"curr":"DOP"},{"d":"Valvula digital Clack plastica 2 pulg","q":2,"u":"Und","p":55000.0,"curr":"DOP"},{"d":"Clack alternante plastica 2 pulg","q":1,"u":"Und","p":15625.0,"curr":"DOP"},{"d":"Clack medidor de flujo 2 pulg","q":1,"u":"Und","p":27000.0,"curr":"DOP"},{"d":"Distribuidor de fondo con dedos","q":4,"u":"Und","p":3800.0,"curr":"DOP"},{"d":"Resina cationica Jacobi K-8FG 28 Lts","q":30,"u":"Und","p":4475.0,"curr":"DOP"},{"d":"Carbon activado granulado Jacobi","q":19,"u":"Und","p":3860.0,"curr":"DOP"},{"d":"Zeolita medio filtrante Turbidex","q":15,"u":"Und","p":9500.0,"curr":"DOP"},{"d":"Gravilla 1/4x1/8 fundas 50 lbs","q":25,"u":"Und","p":1400.0,"curr":"DOP"},{"d":"Lampara ultravioleta Topone 36GPM","q":1,"u":"Und","p":92134.0,"curr":"DOP"},{"d":"Tanque solucion quimicos redondo","q":1,"u":"Und","p":7334.0,"curr":"DOP"},{"d":"Cloro liquido 6.5pct caneca 9 Gls","q":3,"u":"Und","p":1200.0,"curr":"DOP"},{"d":"Piezas de instalacion de equipos","q":1,"u":"Serv","p":50000.0,"curr":"DOP"},{"d":"Accesorios adicionales","q":1,"u":"Serv","p":150000.0,"curr":"DOP"}],"oc_050":[{"d":"Instalacion equipos cocina industrial","q":1,"u":"Serv","p":8260.0,"curr":"USD"}],"oc_051":[{"d":"Carrito de golf electrico negro","q":1,"u":"Und","p":1476000.0,"curr":"DOP"},{"d":"Carrito de golf electrico verde y azul","q":4,"u":"Und","p":371000.0,"curr":"DOP"}],"oc_053":[{"d":"Extintor tipo ABC 50 Lbs rodante","q":1,"u":"Und","p":23200.0,"curr":"DOP"},{"d":"Extintor tipo CO2 25 Lbs rodante","q":1,"u":"Und","p":21150.0,"curr":"DOP"},{"d":"Extintor tipo CO2 5 Lbs","q":45,"u":"Und","p":3925.0,"curr":"DOP"},{"d":"Extintor tipo CO2 10 Lbs","q":5,"u":"Und","p":7220.0,"curr":"DOP"},{"d":"Extintor tipo ABC 10 Lbs con gancho y senal","q":15,"u":"Und","p":2950.0,"curr":"DOP"},{"d":"Gabinete para extintor 10-20 Lbs","q":10,"u":"Und","p":4625.0,"curr":"DOP"},{"d":"Extintor tipo K 6 Lts cocina","q":3,"u":"Und","p":11850.0,"curr":"DOP"},{"d":"Extintor tipo Foam 6 Lts","q":1,"u":"Und","p":6475.0,"curr":"DOP"}]};
+      const _PV={"pv02":"pv_carballo","pv03":"pv_raul","pv04":"pv_newhotel","pv05":"pv_wabi","pv06":"pv_porto","pv07":"pv_esp","pv08":"pv_profix","pv09":"pv_aquaflow","pv10":"pv_biodepur","pv11":"pv_inspira","pv12":"pv_mt","pv13":"pv_musitempo","pv14":"pv_nvauto","pv15":"pv_telecable","pv16":"pv_motores","pv17":"pv_excecon","pv18":"pv_ontario","pv19":"pv_hunter","pv20":"pv_moloy","pv21":"pv_lann","pv22":"pv_henan","pv23":"pv_security","pv24":"pv_rrhh","pv_inspira_tex":"pv_inspira"};
+      merged.forEach(function(o){if(_SP[o.id])o.ls=_SP[o.id];if(_PV[o.pv])o.pv=_PV[o.pv];});
       lsSet('ordenes',merged);
-      OCS=merged.map(o=>({...o,ls:(typeof o.ls==='string'?JSON.parse(o.ls):(o.ls||[])).map(l=>({d:l.d||'',q:+(l.q||l.qty||0),u:l.u||'Und',p:+(l.p||l.pu||0),desc:+(l.desc||0)}))}));
+      OCS=merged.map(function(o){var rawLs=Array.isArray(o.ls)?o.ls:(typeof o.ls==='string'?JSON.parse(o.ls||'[]'):[]);return Object.assign({},o,{ls:rawLs.map(function(l){return{d:l.d||'',q:+(l.q||l.qty||0),u:l.u||'Und',p:+(l.p||l.pu||0),curr:l.curr||'',desc:+(l.desc||0)};})});});
       changed=true;
     }
     if(catR.length){PRODS=mergeById(lsGet('catalogo'),catR);lsSet('catalogo',PRODS);changed=true;}
