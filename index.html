@@ -249,7 +249,7 @@ label{font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--
 /* ─── NEW DOC DESIGN ───────────────────────────────────────────── */
 .pdf-hdr-top{text-align:center;padding-bottom:14px}
 .pdf-logo-c{height:56px;width:auto;margin-bottom:7px}
-.pdf-co-name{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;letter-spacing:3px;color:#1C1C18;margin-bottom:2px}
+.pdf-co-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;font-style:italic;letter-spacing:1.5px;color:#1C1C18;margin-bottom:2px}
 .pdf-co-sub{font-size:8px;color:#888;letter-spacing:.5px}
 .pdf-rule-h{border:none;border-top:1.5px solid #1C1C18;margin-bottom:16px}
 .pdf-title{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;letter-spacing:2px;text-align:center;color:#1C1C18;margin-bottom:12px}
@@ -516,7 +516,21 @@ label{font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--
       <div class="fg"><label>Enlace al documento en Drive</label><input type="url" id="f-docurl" placeholder="https://drive.google.com/…"></div>
       <div class="fg"><label>Centro de costo</label><select id="f-ctr"><option value="">— Sin asignar —</option><option>Restaurante Olea</option><option>Villas</option><option>Wellness — Calma</option><option>ECOE Experience</option><option>Administración general</option><option>Infraestructura</option></select></div>
       <div class="fg"><label>Condición de pago</label><select id="f-pago"><option>Contado</option><option>30 días</option><option>60 días</option><option>50% anticipado / 50% entrega</option><option>60% anticipado / 40% entrega</option><option>Transferencia bancaria</option><option>A convenir</option></select></div>
-      <div class="fg full"><label>Notas</label><textarea id="f-notas"></textarea></div>
+      <div class="fg"><label>Tiempo de entrega</label><input id="f-entrega" placeholder="Ej: 15 días calendario, 4–6 semanas…"></div>
+    </div>
+  </div>
+  <div class="fsec"><div class="fsec-t">Emisor de la orden</div>
+    <div class="g2">
+      <div class="fg"><label>Nombre del solicitante</label><input id="f-emisor-nom" placeholder="Nombre completo"></div>
+      <div class="fg"><label>Email del solicitante</label><input type="email" id="f-emisor-email" placeholder="correo@amares.com"></div>
+      <div class="fg"><label>Departamento</label><input id="f-emisor-depto" placeholder="Ej: Operaciones, A&B, Finanzas…"></div>
+      <div class="fg"><label>Responsable de recepción</label><input id="f-resp-recep" placeholder="Quién recibe la mercancía"></div>
+    </div>
+  </div>
+  <div class="fsec"><div class="fsec-t">Observaciones de la orden</div>
+    <div class="g2">
+      <div class="fg full"><label>Observaciones (una por línea)</label><textarea id="f-obs" rows="4" placeholder="Escribe cada observación en una línea separada…"></textarea></div>
+    </div>
     </div>
   </div>
   <div class="fsec"><div class="fsec-t">Documento adjunto (PDF)</div>
@@ -986,6 +1000,11 @@ function renderOC(){
 // ── OC FORM ──────────────────────────────────────────────────────
 function openNewOC(pvId){
   editOC=null;lidC=0;LS=[{id:0,d:'',q:1,u:'Und',curr:'USD',p:0}];pendingFile=null;
+  document.getElementById('f-emisor-nom').value='Rikelvis Willmore';
+  document.getElementById('f-emisor-email').value='rikelvis.amaresuniquehomes@gmail.com';
+  document.getElementById('f-emisor-depto').value='Operaciones';
+  document.getElementById('f-resp-recep').value='Departamento de Operaciones';
+  document.getElementById('f-obs').value='Todos los productos deben cumplir con las especificaciones solicitadas.\nLa factura debe incluir el número de esta orden de compra.\nCualquier modificación debe ser aprobada previamente por Amares.';
   document.getElementById('m-oc-t').textContent='Nueva Orden de Compra';
   document.getElementById('m-oc-s').textContent=nextN();
   document.getElementById('f-num').value=nextN();
@@ -1016,6 +1035,12 @@ function openEditOC(id){
   document.getElementById('f-pago').value=o.pago||'Contado';
   document.getElementById('upload-txt').textContent=o.pdf_url?'Adjunto existente — clic para cambiar':'Haz clic o arrastra un PDF aquí';
   document.getElementById('upload-preview').innerHTML=o.pdf_url?`<a href="${o.pdf_url}" target="_blank" class="doc-lnk">📄 Ver adjunto actual</a>`:'';
+  document.getElementById('f-entrega').value=o.entrega||'';
+  document.getElementById('f-emisor-nom').value=o.emisor_nom||'Rikelvis Willmore';
+  document.getElementById('f-emisor-email').value=o.emisor_email||'rikelvis.amaresuniquehomes@gmail.com';
+  document.getElementById('f-emisor-depto').value=o.emisor_depto||'Operaciones';
+  document.getElementById('f-resp-recep').value=o.resp_recep||'Departamento de Operaciones';
+  document.getElementById('f-obs').value=o.obs||'Todos los productos deben cumplir con las especificaciones solicitadas.\nLa factura debe incluir el número de esta orden de compra.\nCualquier modificación debe ser aprobada previamente por Amares.';
   fillPvSel(o.pv);buildLines();openM('m-oc');
 }
 function fillPvSel(sel){document.getElementById('f-pv').innerHTML=PVS.map(p=>`<option value="${p.id}"${p.id===sel?' selected':''}>${p.nom}</option>`).join('');}
@@ -1141,7 +1166,13 @@ async function saveOC(){
       docurl:document.getElementById('f-docurl').value||null,
       ctr:document.getElementById('f-ctr').value||null,
       pago:document.getElementById('f-pago').value,
-      notas:document.getElementById('f-notas').value||null,
+      entrega:document.getElementById('f-entrega').value||null,
+      emisor_nom:document.getElementById('f-emisor-nom').value||null,
+      emisor_email:document.getElementById('f-emisor-email').value||null,
+      emisor_depto:document.getElementById('f-emisor-depto').value||null,
+      resp_recep:document.getElementById('f-resp-recep').value||null,
+      obs:document.getElementById('f-obs').value||null,
+      notas:null,
       ls:lv.map(({id:_,...r})=>r),
       pdf_url,
       updated_at:new Date().toISOString()
@@ -1215,14 +1246,19 @@ function buildDoc(o){
   const fmt=(v)=>sym+v.toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});
   const dots='<span class="ptdots"></span>';
   const pago=o.pago||'50% anticipo / 50% contra entrega';
-  const ent=o.ent||'A convenir';
+  const ent=o.entrega||o.ent||'A convenir';
   const proj=o.ctr||'Restaurante Olea';
+  const emisorNom=o.emisor_nom||'Rikelvis Willmore';
+  const emisorEmail=o.emisor_email||'rikelvis.amaresuniquehomes@gmail.com';
+  const emisorDepto=o.emisor_depto||'Operaciones';
+  const respRecep=o.resp_recep||'Departamento de Operaciones';
+  const obsLines=(o.obs||'Todos los productos deben cumplir con las especificaciones solicitadas.\nLa factura debe incluir el número de esta orden de compra.\nCualquier modificación debe ser aprobada previamente por Amares.').split('\n').filter(l=>l.trim());
   return`<div class="pdf-wrap"><div class="pdf-doc">
 
     <!-- HEADER -->
     <div class="pdf-hdr-top">
       <img src="${LPDF}" class="pdf-logo-c" alt="Amares">
-      <div class="pdf-co-name">AMARES UNIQUE HOMES</div>
+      <div class="pdf-co-name">Unique Homes</div>
       <div class="pdf-co-sub">Las Terrenas, Samaná, República Dominicana</div>
     </div>
     <div class="pdf-rule-h"></div>
@@ -1244,9 +1280,9 @@ function buildDoc(o){
         <div class="pdf-party-hdr">COMPRADOR</div>
         <div class="pdf-party-body">
           <div class="pdf-party-name">Amares Unique Homes</div>
-          <div><span class="pdf-fl">Departamento:</span> Operaciones</div>
-          <div><span class="pdf-fl">Contacto:</span> Rikelvis Willmore</div>
-          <div><span class="pdf-fl">Email:</span> rikelvis.amaresuniquehomes@gmail.com</div>
+          <div><span class="pdf-fl">Departamento:</span> ${emisorDepto}</div>
+          <div><span class="pdf-fl">Contacto:</span> ${emisorNom}</div>
+          <div><span class="pdf-fl">Email:</span> ${emisorEmail}</div>
         </div>
       </div>
       <div class="pdf-party">
@@ -1299,16 +1335,13 @@ function buildDoc(o){
       <div class="pdf-cond-row"><span class="pdf-fl">Condición de pago:</span> ${pago}</div>
       <div class="pdf-cond-row"><span class="pdf-fl">Tiempo de entrega:</span> ${ent}</div>
       <div class="pdf-cond-row"><span class="pdf-fl">Lugar de entrega:</span> Proyecto Amares Unique Homes – Las Terrenas</div>
-      <div class="pdf-cond-row"><span class="pdf-fl">Responsable recepción:</span> Departamento de Operaciones</div>
+      <div class="pdf-cond-row"><span class="pdf-fl">Responsable recepción:</span> ${respRecep}</div>
     </div>
 
     <!-- OBSERVACIONES -->
     <div class="pdf-sec-hdr">OBSERVACIONES</div>
     <div class="pdf-obs">
-      <div class="pdf-obs-item">• Todos los productos deben cumplir con las especificaciones solicitadas.</div>
-      <div class="pdf-obs-item">• La factura debe incluir el número de esta orden de compra.</div>
-      <div class="pdf-obs-item">• Cualquier modificación debe ser aprobada previamente por Amares.</div>
-      ${o.notas?`<div class="pdf-obs-item">• ${o.notas}</div>`:''}
+      ${obsLines.map(l=>`<div class="pdf-obs-item">• ${l.replace(/^[•·\-]\s*/,'')}</div>`).join('')}
     </div>
 
     <!-- AUTORIZACIONES -->
@@ -1360,7 +1393,7 @@ function printOC(){
     /* HEADER */
     .pdf-hdr-top{text-align:center;padding-bottom:16px}
     .pdf-logo-c{height:58px;width:auto;margin-bottom:8px}
-    .pdf-co-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;letter-spacing:3px;color:#1C1C18;margin-bottom:3px}
+    .pdf-co-name{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:400;font-style:italic;letter-spacing:1.5px;color:#1C1C18;margin-bottom:3px}
     .pdf-co-sub{font-size:8.5px;color:#777;letter-spacing:.5px}
     .pdf-rule-h{border:none;border-top:1.5px solid #1C1C18;margin-bottom:18px}
 
