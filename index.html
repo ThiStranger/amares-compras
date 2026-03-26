@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="cache-control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -657,6 +660,16 @@ label{font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--
 </div>
 </div>
 <script>
+// ── VERSION URL REDIRECT (force fresh load on version bump) ─────
+(function(){
+  var APP_URL_VER='11';
+  var param='v='+APP_URL_VER;
+  if(location.search.indexOf(param)===-1){
+    location.replace(location.pathname+'?'+param+(location.hash||''));
+  }
+})();
+// ────────────────────────────────────────────────────────────────
+
 
 const SB_URL='https://euwmxikznrbuionamisw.supabase.co';
 const SB_KEY='sb_publishable_IkN0onfnrKs1qzYvUZS4gA_V2YgbVDT';
