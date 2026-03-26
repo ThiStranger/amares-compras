@@ -225,7 +225,7 @@ label{font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--
 .pdf-num{font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:500;color:#1C1C18;line-height:1}
 .pdf-meta{font-size:9px;color:#777;line-height:2;margin-top:4px}
 .pdf-rule{height:2px;background:linear-gradient(90deg,#1C1C18 60%,#F0EBE1);margin-bottom:18px}
-.pdf-2c{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:18px}
+.pdf-2c{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:0}
 .pdf-ll{font-size:7px;letter-spacing:2px;text-transform:uppercase;color:#9A9890;margin-bottom:5px}
 .pdf-pn{font-size:13px;font-weight:500;color:#1C1C18;margin-bottom:3px}
 .pdf-pd{font-size:10px;color:#555;line-height:1.75}
@@ -246,6 +246,37 @@ label{font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--
 .pdf-ft-t{font-size:7.5px;color:rgba(240,235,225,.3);letter-spacing:.3px}
 /* Currency indicator on PDF */
 .cx-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:8px;font-weight:600;letter-spacing:.5px;margin-left:8px}
+/* ─── NEW DOC DESIGN ───────────────────────────────────────────── */
+.pdf-hdr-top{text-align:center;padding-bottom:14px}
+.pdf-logo-c{height:56px;width:auto;margin-bottom:7px}
+.pdf-co-name{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;letter-spacing:3px;color:#1C1C18;margin-bottom:2px}
+.pdf-co-sub{font-size:8px;color:#888;letter-spacing:.5px}
+.pdf-rule-h{border:none;border-top:1.5px solid #1C1C18;margin-bottom:16px}
+.pdf-title{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;letter-spacing:2px;text-align:center;color:#1C1C18;margin-bottom:12px}
+.pdf-meta-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;background:#F5F2EC;border:1px solid #E0DDD5;border-radius:4px;padding:8px 12px;margin-bottom:14px;font-size:9.5px}
+.pdf-ml{color:#999;font-size:8px}
+.pdf-party{border:1px solid #D8D4CC;border-radius:4px;overflow:hidden;margin-bottom:0}
+.pdf-party-hdr{background:#1A4B6D;color:#fff;font-size:7.5px;font-weight:600;letter-spacing:2px;padding:6px 11px}
+.pdf-party-body{padding:9px 11px;font-size:9.5px;color:#444;line-height:1.85}
+.pdf-party-name{font-weight:600;color:#1C1C18;font-size:11px;margin-bottom:2px}
+.pdf-fl{color:#999;font-size:8px}
+.pdf-sec-hdr{background:#1A4B6D;color:#fff;font-size:7.5px;font-weight:600;letter-spacing:2px;padding:6px 11px;margin-top:12px}
+.ptdots{flex:1;border-bottom:1px dotted #BBB;margin:0 8px;position:relative;top:-3px}
+.ptot-block{padding:12px 14px;background:#F5F2EC;border:1px solid #E0DDD5}
+.ptot-row{display:flex;align-items:baseline;font-size:10px;padding:3px 0;color:#555}
+.ptot-row span:first-child{min-width:120px}
+.ptot-grand{font-weight:700;font-size:13px;color:#1C1C18;border-top:1.5px solid #CCC;padding-top:6px;margin-top:4px}
+.ptot-grand span:first-child{min-width:120px}
+.ptot-eq{font-size:8.5px;color:#999;padding-top:4px;border-top:1px solid #E0DDD5;margin-top:3px}
+.pdf-cond{padding:9px 11px;border:1px solid #E0DDD5;border-top:none;font-size:9.5px;line-height:2}
+.pdf-obs{padding:9px 11px;border:1px solid #E0DDD5;border-top:none;font-size:9.5px;line-height:1.85}
+.pdf-obs-item{padding:1px 0}
+.psigns{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-top:16px;padding-top:14px;border-top:1px solid #E0DDD5}
+.psign-prov .pdf-prov-box{border:1px solid #D8D4CC;border-radius:4px;padding:7px 9px}
+.pdf-prov-title{font-size:7.5px;font-weight:600;letter-spacing:1px;color:#1A4B6D;margin-bottom:5px;text-transform:uppercase}
+.pdf-prov-line{font-size:8px;color:#444;line-height:2.1}
+.pdf-blank{color:#CCC}
+.ptd-num{color:#AAA;font-size:8.5px;text-align:center}
 
 /* ─── CHARTS ─────────────────────────────────────────────────── */
 .chart-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:13px;margin-bottom:13px}
@@ -1181,61 +1212,134 @@ async function confCancel(id){
 function buildDoc(o){
   const p=gp(o.pv);const mon=o.mon||'USD';const sym=MSYM[mon]||'$';
   const s=subOC(o);const it=s*ITBIS;const t=s+it;const tU=totUSD(o);
-  const monTag={USD:'#1A4E72',DOP:'#1A5C2E',EUR:'#5A3A72'}[mon]||'#1A4E72';
+  const fmt=(v)=>sym+v.toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const dots='<span class="ptdots"></span>';
+  const pago=o.pago||'50% anticipo / 50% contra entrega';
+  const ent=o.ent||'A convenir';
+  const proj=o.ctr||'Restaurante Olea';
   return`<div class="pdf-wrap"><div class="pdf-doc">
-    <div class="pdf-hdr">
-      <img src="${LPDF}" class="pdf-logo" alt="Amares Unique Homes">
-      <div class="pdf-oc-meta">
-        <div class="pdf-tag">Orden de Compra</div>
-        <div class="pdf-num">${o.num}</div>
-        <div class="pdf-meta">
-          Fecha: ${o.fecha}${o.ent?'<br>Entrega: '+o.ent:''}
-          ${o.ctr?'<br>Centro: '+o.ctr:''}
-          ${o.pago?'<br>Pago: '+o.pago:''}
-          ${o.cot?'<br>Ref.: '+o.cot:''}
-        </div>
-      </div>
+
+    <!-- HEADER -->
+    <div class="pdf-hdr-top">
+      <img src="${LPDF}" class="pdf-logo-c" alt="Amares">
+      <div class="pdf-co-name">AMARES UNIQUE HOMES</div>
+      <div class="pdf-co-sub">Las Terrenas, Samaná, República Dominicana</div>
     </div>
-    <div class="pdf-rule"></div>
+    <div class="pdf-rule-h"></div>
+
+    <!-- TÍTULO -->
+    <div class="pdf-title">ORDEN DE COMPRA</div>
+
+    <!-- META FILA -->
+    <div class="pdf-meta-row">
+      <div><span class="pdf-ml">Orden No:</span> <strong>${o.num}</strong></div>
+      <div><span class="pdf-ml">Fecha:</span> ${o.fecha}</div>
+      <div><span class="pdf-ml">Proyecto:</span> ${proj}</div>
+      <div><span class="pdf-ml">Moneda:</span> ${mon}</div>
+    </div>
+
+    <!-- COMPRADOR / PROVEEDOR -->
     <div class="pdf-2c">
-      <div>
-        <div class="pdf-ll">Emitido por</div>
-        <div class="pdf-pn">Amares Unique Homes</div>
-        <div class="pdf-pd">SAMABELLA SPACE SRL<br>RNC: 132-60945-1<br>Playa El Estillero, El Limón<br>Las Terrenas, Samaná · República Dominicana</div>
-      </div>
-      <div>
-        <div class="pdf-ll">Proveedor</div>
-        <div class="pdf-pn">${p.nom}</div>
-        <div class="pdf-pd">
-          ${p.rnc?'RNC/TAX: '+p.rnc+'<br>':''}
-          ${p.cont?p.cont+(p.cargo?' · '+p.cargo:'')+'<br>':''}
-          ${p.email?p.email+'<br>':''}
-          ${p.tel?p.tel+'<br>':''}
-          ${[p.ciudad,p.pais].filter(Boolean).join(' · ')}
+      <div class="pdf-party">
+        <div class="pdf-party-hdr">COMPRADOR</div>
+        <div class="pdf-party-body">
+          <div class="pdf-party-name">Amares Unique Homes</div>
+          <div><span class="pdf-fl">Departamento:</span> Operaciones</div>
+          <div><span class="pdf-fl">Contacto:</span> Rikelvis Willmore</div>
+          <div><span class="pdf-fl">Email:</span> rikelvis.amaresuniquehomes@gmail.com</div>
         </div>
-        ${p.drive?`<a href="${p.drive}" target="_blank" style="font-size:9px;color:#333;margin-top:5px;display:inline-flex;align-items:center;gap:3px;text-decoration:underline">📁 Carpeta de documentos</a>`:''}
+      </div>
+      <div class="pdf-party">
+        <div class="pdf-party-hdr">PROVEEDOR</div>
+        <div class="pdf-party-body">
+          <div class="pdf-party-name">${p.nom}</div>
+          ${p.rnc?`<div><span class="pdf-fl">RNC:</span> ${p.rnc}</div>`:''}
+          ${p.dir?`<div><span class="pdf-fl">Dirección:</span> ${p.dir}</div>`:''}
+          ${(p.ciudad||p.pais)?`<div><span class="pdf-fl">Ciudad:</span> ${[p.ciudad,p.pais].filter(Boolean).join(', ')}</div>`:''}
+          ${p.contacto?`<div><span class="pdf-fl">Contacto:</span> ${p.contacto}</div>`:''}
+          ${p.email?`<div><span class="pdf-fl">Email:</span> ${p.email}</div>`:''}
+        </div>
       </div>
     </div>
-    ${o.notas?`<div class="pdf-note"><strong>Notas:</strong> ${o.notas}</div>`:''}
-    <div style="font-size:7px;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:8px;font-weight:500">Artículos solicitados</div>
+
+    <!-- DETALLE DE PRODUCTOS -->
+    <div class="pdf-sec-hdr">DETALLE DE PRODUCTOS</div>
     <table class="ptbl">
-      <thead><tr><th style="width:24px">#</th><th>Descripción del producto / servicio</th><th style="text-align:center;width:52px">Cantidad</th><th style="text-align:center;width:44px">Unid.</th><th style="text-align:right;width:96px">P. Unitario</th><th style="text-align:right;width:96px">Precio Total</th></tr></thead>
+      <thead><tr>
+        <th style="width:36px">Ítem</th>
+        <th>Descripción</th>
+        <th style="text-align:center;width:72px">Cantidad</th>
+        <th style="text-align:right;width:110px">Precio Unitario (${mon})</th>
+        <th style="text-align:right;width:110px">Subtotal (${mon})</th>
+      </tr></thead>
       <tbody>${o.ls.map((l,i)=>{
         const lm=l.curr||mon;const lsym=MSYM[lm]||lm+' ';const sv=(+l.q||0)*(+l.p||0);
-        return`<tr><td style="color:#666">${i+1}</td><td>${l.d}</td><td style="text-align:center">${l.q}</td><td style="text-align:center">${l.u}</td><td style="text-align:right;white-space:nowrap">${lsym}${(+l.p||0).toLocaleString('es-DO',{minimumFractionDigits:2})}</td><td style="text-align:right;white-space:nowrap;font-weight:500">${lsym}${sv.toLocaleString('es-DO',{minimumFractionDigits:2})}</td></tr>`;
+        return`<tr>
+          <td class="ptd-num">${String(i+1).padStart(2,'0')}</td>
+          <td>${l.d}</td>
+          <td style="text-align:center">${l.q} ${l.u}</td>
+          <td style="text-align:right">${lsym}${(+l.p||0).toLocaleString('es-DO',{minimumFractionDigits:2})}</td>
+          <td style="text-align:right;font-weight:500">${lsym}${sv.toLocaleString('es-DO',{minimumFractionDigits:2})}</td>
+        </tr>`;
       }).join('')}</tbody>
     </table>
-    <div class="ptot-b">
-      <div class="ptr" style="font-size:9px;color:#999;padding-bottom:5px;border-bottom:1px solid #E0DDD7;margin-bottom:3px"><span>${o.ls.length} artículo${o.ls.length!==1?'s':''}</span><span></span></div>
-      <div class="ptr"><span>Subtotal (${mon})</span><span>${sym}${s.toLocaleString('es-DO',{minimumFractionDigits:2})}</span></div>
-      <div class="ptr"><span>ITBIS 18%</span><span>${sym}${it.toLocaleString('es-DO',{minimumFractionDigits:2})}</span></div>
-      <div class="ptr grand"><span>Total ${mon}</span><span>${sym}${t.toLocaleString('es-DO',{minimumFractionDigits:2})}</span></div>
-      ${mon!=='USD'?`<div class="ptr" style="font-size:9px;color:#888;margin-top:4px;padding-top:5px;border-top:1px solid #DDD"><span>≈ Equivalente USD</span><span>${fmtUSD(tU)}</span></div>`:''}
+
+    <!-- RESUMEN FINANCIERO -->
+    <div class="pdf-sec-hdr">RESUMEN FINANCIERO</div>
+    <div class="ptot-block">
+      <div class="ptot-row"><span>Subtotal</span>${dots}<span>${fmt(s)}</span></div>
+      <div class="ptot-row"><span>ITBIS (18%)</span>${dots}<span>${fmt(it)}</span></div>
+      <div class="ptot-row ptot-grand"><span>TOTAL ORDEN</span>${dots}<span>${fmt(t)}</span></div>
+      ${mon!=='USD'?`<div class="ptot-row ptot-eq"><span>≈ Equivalente USD</span>${dots}<span>${fmtUSD(tU)}</span></div>`:''}
     </div>
+
+    <!-- CONDICIONES -->
+    <div class="pdf-sec-hdr">CONDICIONES DE COMPRA</div>
+    <div class="pdf-cond">
+      <div class="pdf-cond-row"><span class="pdf-fl">Condición de pago:</span> ${pago}</div>
+      <div class="pdf-cond-row"><span class="pdf-fl">Tiempo de entrega:</span> ${ent}</div>
+      <div class="pdf-cond-row"><span class="pdf-fl">Lugar de entrega:</span> Proyecto Amares Unique Homes – Las Terrenas</div>
+      <div class="pdf-cond-row"><span class="pdf-fl">Responsable recepción:</span> Departamento de Operaciones</div>
+    </div>
+
+    <!-- OBSERVACIONES -->
+    <div class="pdf-sec-hdr">OBSERVACIONES</div>
+    <div class="pdf-obs">
+      <div class="pdf-obs-item">• Todos los productos deben cumplir con las especificaciones solicitadas.</div>
+      <div class="pdf-obs-item">• La factura debe incluir el número de esta orden de compra.</div>
+      <div class="pdf-obs-item">• Cualquier modificación debe ser aprobada previamente por Amares.</div>
+      ${o.notas?`<div class="pdf-obs-item">• ${o.notas}</div>`:''}
+    </div>
+
+    <!-- AUTORIZACIONES -->
+    <div class="pdf-sec-hdr">AUTORIZACIONES</div>
     <div class="psigns">
-      <div class="psign"><div class="psign-l"></div><div class="psign-n">Director de A&B</div><div class="psign-r">Elaborado por</div></div>
-      <div class="psign"><div class="psign-l"></div><div class="psign-n">Dirección General</div><div class="psign-r">Aprobado por</div></div>
+      <div class="psign">
+        <div class="psign-l"></div>
+        <div class="psign-n">Rikelvis Willmore</div>
+        <div class="psign-r">Director de A&amp;B · Solicitado por</div>
+      </div>
+      <div class="psign">
+        <div class="psign-l"></div>
+        <div class="psign-n">Carola Mestre</div>
+        <div class="psign-r">Directora de Operaciones · Revisado por</div>
+      </div>
+      <div class="psign">
+        <div class="psign-l"></div>
+        <div class="psign-n">Dirección Administrativa</div>
+        <div class="psign-r">Aprobado por</div>
+      </div>
+      <div class="psign psign-prov">
+        <div class="pdf-prov-box">
+          <div class="pdf-prov-title">Confirmación del Proveedor</div>
+          <div class="pdf-prov-line">Nombre: <span class="pdf-blank">___________________________</span></div>
+          <div class="pdf-prov-line">Cargo: <span class="pdf-blank">____________________________</span></div>
+          <div class="pdf-prov-line">Firma: <span class="pdf-blank">_____________________________</span></div>
+          <div class="pdf-prov-line">Fecha: <span class="pdf-blank">_____________________________</span></div>
+        </div>
+      </div>
     </div>
+
   </div>
   <div class="pdf-ft">
     <div class="pdf-ft-t">SAMABELLA SPACE SRL · Las Terrenas, Samaná · República Dominicana</div>
@@ -1245,42 +1349,88 @@ function buildDoc(o){
 
 function printOC(){
   const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"><style>
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--ink);background:var(--bg);margin:0;display:flex;min-height:100vh;-webkit-font-smoothing:antialiased}:'DM Sans',sans-serif;background:#fff;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .pdf-wrap{background:#fff;max-width:760px;margin:0 auto}
-    .pdf-doc{padding:32px 40px;font-size:10.5px;color:#1C1C18;line-height:1.5}
-    .pdf-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:18px;border-bottom:2px solid #1C1C18}
-    .pdf-logo{height:54px;width:auto}
-    .pdf-oc-meta{text-align:right}
-    .pdf-tag{font-size:7px;letter-spacing:2.5px;text-transform:uppercase;color:#777;margin-bottom:3px}
-    .pdf-num{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:500;color:#1C1C18;line-height:1}
-    .pdf-meta{font-size:9px;color:#555;line-height:2;margin-top:4px}
-    .pdf-rule{display:none}
-    .pdf-2c{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #E8E4DC}
-    .pdf-ll{font-size:7px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-bottom:5px;font-weight:500}
-    .pdf-pn{font-size:13px;font-weight:600;color:#1C1C18;margin-bottom:3px}
-    .pdf-pd{font-size:9.5px;color:#444;line-height:1.8}
-    .pdf-note{background:#F7F4EE;border-left:2px solid #333;padding:7px 11px;font-size:9.5px;color:#444;margin-bottom:14px;border-radius:0 3px 3px 0}
-    .ptbl{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:10px}
-    .ptbl thead tr{background:#1C1C18}
-    .ptbl th{color:#F0EBE1;padding:7px 8px;text-align:left;font-size:7px;letter-spacing:1px;text-transform:uppercase;font-weight:500}
-    .ptbl td{padding:7px 8px;border-bottom:1px solid #EDEAE4;color:#333;vertical-align:top}
-    .ptbl tr:nth-child(even) td{background:#FAFAF7}
+    body{font-family:'DM Sans',sans-serif;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#1C1C18}
+    .pdf-wrap{background:#fff;max-width:780px;margin:0 auto}
+    .pdf-doc{padding:36px 44px 28px;font-size:10.5px;line-height:1.55}
+
+    /* HEADER */
+    .pdf-hdr-top{text-align:center;padding-bottom:16px}
+    .pdf-logo-c{height:58px;width:auto;margin-bottom:8px}
+    .pdf-co-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;letter-spacing:3px;color:#1C1C18;margin-bottom:3px}
+    .pdf-co-sub{font-size:8.5px;color:#777;letter-spacing:.5px}
+    .pdf-rule-h{border:none;border-top:1.5px solid #1C1C18;margin-bottom:18px}
+
+    /* TÍTULO */
+    .pdf-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;letter-spacing:2px;text-align:center;color:#1C1C18;margin-bottom:14px}
+
+    /* META ROW */
+    .pdf-meta-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;background:#F5F2EC;border:1px solid #E0DDD5;border-radius:4px;padding:9px 14px;margin-bottom:16px;font-size:9.5px}
+    .pdf-ml{color:#888;font-size:8.5px}
+
+    /* COMPRADOR / PROVEEDOR */
+    .pdf-2c{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+    .pdf-party{border:1px solid #D8D4CC;border-radius:4px;overflow:hidden}
+    .pdf-party-hdr{background:#1A4B6D;color:#fff;font-size:8px;font-weight:600;letter-spacing:2px;padding:7px 12px}
+    .pdf-party-body{padding:10px 12px;font-size:9.5px;color:#444;line-height:1.9}
+    .pdf-party-name{font-weight:600;color:#1C1C18;font-size:11px;margin-bottom:2px}
+    .pdf-fl{color:#888;font-size:8.5px}
+
+    /* SECTION HEADERS */
+    .pdf-sec-hdr{background:#1A4B6D;color:#fff;font-size:8px;font-weight:600;letter-spacing:2px;padding:7px 12px;margin-bottom:0;margin-top:14px}
+
+    /* TABLE */
+    .ptbl{width:100%;border-collapse:collapse;font-size:10px;margin-bottom:0}
+    .ptbl thead tr{background:#2A3F50}
+    .ptbl th{color:#E8F0F5;padding:8px 10px;font-size:7.5px;letter-spacing:.8px;font-weight:500;text-transform:uppercase}
+    .ptbl td{padding:8px 10px;border-bottom:1px solid #ECEAE4;color:#333;vertical-align:middle}
+    .ptbl tr:nth-child(even) td{background:#F8F6F2}
     .ptbl tr:last-child td{border-bottom:none}
-    .ptot-b{width:220px;margin-left:auto;margin-bottom:16px;background:#F5F2EC;border-radius:5px;padding:12px 14px}
-    .ptr{display:flex;justify-content:space-between;padding:3px 0;font-size:10px;color:#555}
-    .ptr.grand{font-weight:700;font-size:13px;color:#1C1C18;border-top:1.5px solid #CCC;padding-top:6px;margin-top:4px}
-    .psigns{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:24px;padding-top:16px;border-top:1px solid #E8E4DC}
-    .psign-l{border-bottom:1px solid #999;height:36px;margin-bottom:5px}
-    .psign-n{font-size:10px;color:#333;font-weight:600;text-align:center}
-    .psign-r{font-size:7.5px;color:#888;margin-top:1px;text-align:center}
-    .pdf-ft{background:#1C1C18;padding:9px 40px;display:flex;justify-content:space-between;align-items:center;margin-top:24px}
+    .ptd-num{color:#999;font-size:9px;text-align:center}
+
+    /* TOTALES */
+    .ptot-block{padding:14px 16px;background:#F5F2EC;border:1px solid #E0DDD5;margin-bottom:0}
+    .ptot-row{display:flex;align-items:baseline;font-size:10px;padding:3px 0;color:#444}
+    .ptot-row span:first-child{min-width:130px}
+    .ptdots{flex:1;border-bottom:1px dotted #BBB;margin:0 8px;position:relative;top:-3px}
+    .ptot-grand{font-weight:700;font-size:13px;color:#1C1C18;border-top:1.5px solid #CCC;padding-top:7px;margin-top:4px}
+    .ptot-grand span:first-child{min-width:130px}
+    .ptot-eq{font-size:9px;color:#888;padding-top:5px;border-top:1px solid #E0DDD5;margin-top:4px}
+
+    /* CONDITIONS */
+    .pdf-cond{padding:10px 12px;border:1px solid #E0DDD5;border-top:none;font-size:9.5px;line-height:2}
+    .pdf-cond-row{}
+
+    /* OBSERVATIONS */
+    .pdf-obs{padding:10px 12px;border:1px solid #E0DDD5;border-top:none;font-size:9.5px;line-height:1.9}
+    .pdf-obs-item{padding:1px 0}
+
+    /* SIGNATURES */
+    .psigns{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:20px;margin-top:18px;padding-top:16px;border-top:1px solid #E0DDD5}
+    .psign{}
+    .psign-l{border-bottom:1px solid #999;height:40px;margin-bottom:6px}
+    .psign-n{font-size:9.5px;color:#1C1C18;font-weight:600;text-align:center}
+    .psign-r{font-size:7.5px;color:#888;margin-top:2px;text-align:center}
+    .psign-prov .pdf-prov-box{border:1px solid #D8D4CC;border-radius:4px;padding:8px 10px}
+    .pdf-prov-title{font-size:8px;font-weight:600;letter-spacing:1px;color:#1A4B6D;margin-bottom:6px;text-transform:uppercase}
+    .pdf-prov-line{font-size:8.5px;color:#444;line-height:2.2}
+    .pdf-blank{color:#BBB}
+
+    /* FOOTER */
+    .pdf-ft{background:#1C1C18;padding:9px 44px;display:flex;justify-content:space-between;align-items:center;margin-top:24px}
     .pdf-ft-t{font-size:7.5px;color:rgba(240,235,225,.45);letter-spacing:.3px}
-    @media print{@page{margin:0;size:A4}body{padding:0}}
+
+    @media print{
+      @page{margin:0;size:A4}
+      body{padding:0}
+      .pdf-wrap{max-width:100%}
+    }
   </style></head><body>${document.getElementById('mv-wrap').innerHTML}</body></html>`);
   w.document.close();
-  setTimeout(()=>{w.focus();w.print();},600);
+  setTimeout(()=>{w.focus();w.print();},700);
 }
 
 function dlPDF(){
