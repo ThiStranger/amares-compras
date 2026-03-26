@@ -1082,7 +1082,7 @@ function openEditOC(id){
   document.getElementById('f-est').value=o.est;
   document.getElementById('f-cot').value=o.cot||'';
   document.getElementById('f-docurl').value=o.docurl||'';
-  document.getElementById('f-notas').value=o.notas||'';
+  const _fn=document.getElementById('f-notas');if(_fn)_fn.value=o.notas||'';
   document.getElementById('f-ctr').value=o.ctr||'';
   document.getElementById('f-pago').value=o.pago||'Contado';
   document.getElementById('upload-txt').textContent=o.pdf_url?'Adjunto existente — clic para cambiar':'Haz clic o arrastra un PDF aquí';
