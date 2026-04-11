@@ -534,6 +534,15 @@ label{font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--
       <div class="fg"><label>Centro de costo</label><select id="f-ctr"><option value="">— Sin asignar —</option><option>Restaurante Olea</option><option>Villas</option><option>Wellness — Calma</option><option>ECOE Experience</option><option>Administración general</option><option>Infraestructura</option></select></div>
       <div class="fg"><label>Condición de pago</label><select id="f-pago"><option>Contado</option><option>30 días</option><option>60 días</option><option>50% anticipado / 50% entrega</option><option>60% anticipado / 40% entrega</option><option>Transferencia bancaria</option><option>A convenir</option></select></div>
       <div class="fg"><label>Tiempo de entrega</label><input id="f-entrega" placeholder="Ej: 15 días calendario, 4–6 semanas…"></div>
+      <div class="fg"><label>Impuesto / ITBIS</label>
+        <div style="display:flex;align-items:center;gap:10px;min-height:32px">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none">
+            <input type="checkbox" id="f-itbis" onchange="updateTotals()" style="width:16px;height:16px;accent-color:var(--olive);cursor:pointer">
+            <span style="font-size:11.5px;color:var(--ink3)" id="itbis-lbl">ITBIS 18%</span>
+          </label>
+          <span id="itbis-note" style="font-size:9.5px;color:var(--ink4);font-style:italic"></span>
+        </div>
+      </div>
     </div>
   </div>
   <div class="fsec"><div class="fsec-t">Emisor de la orden</div>
@@ -676,7 +685,7 @@ label{font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--
 <script>
 // ── VERSION URL REDIRECT (force fresh load on version bump) ─────
 (function(){
-  var APP_URL_VER='13';
+  var APP_URL_VER='14';
   var param='v='+APP_URL_VER;
   if(location.search.indexOf(param)===-1){
     location.replace(location.pathname+'?'+param+(location.hash||''));
@@ -1063,6 +1072,7 @@ function openNewOC(pvId){
   document.getElementById('f-fecha').value=new Date().toISOString().split('T')[0];
   document.getElementById('f-mon').value='USD';
   ['f-ent','f-cot','f-docurl','f-notas'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const _fi=document.getElementById('f-itbis');if(_fi){_fi.checked=true;}
   document.getElementById('f-est').value='borrador';
   document.getElementById('f-ctr').value='';
   document.getElementById('f-pago').value='Contado';
@@ -1088,6 +1098,7 @@ function openEditOC(id){
   document.getElementById('upload-txt').textContent=o.pdf_url?'Adjunto existente — clic para cambiar':'Haz clic o arrastra un PDF aquí';
   document.getElementById('upload-preview').innerHTML=o.pdf_url?`<a href="${o.pdf_url}" target="_blank" class="doc-lnk">📄 Ver adjunto actual</a>`:'';
   document.getElementById('f-entrega').value=o.entrega||'';
+  const _fei=document.getElementById('f-itbis');if(_fei)_fei.checked=!!(o.itbis);
   document.getElementById('f-emisor-nom').value=o.emisor_nom||'Rikelvis Willmore';
   document.getElementById('f-emisor-email').value=o.emisor_email||'rikelvis.amaresuniquehomes@gmail.com';
   document.getElementById('f-emisor-depto').value=o.emisor_depto||'Operaciones';
@@ -1153,11 +1164,15 @@ function updateTotals(){
   const mon=document.getElementById('f-mon')?.value||'USD';
   const sym=MSYM[mon]||'$';
   const s=LS.reduce((a,l)=>a+(+l.q||0)*(+l.p||0),0);
-  const it=s*ITBIS;const t=s+it;
+  const applyItbis=document.getElementById('f-itbis')?.checked||false;
+  const it=applyItbis?s*ITBIS:0;const t=s+it;
   const tU=toUSD(t,mon);
+  const lbl=document.getElementById('itbis-lbl');const note=document.getElementById('itbis-note');
+  if(lbl)lbl.style.fontWeight=applyItbis?'500':'400';
+  if(note)note.textContent=applyItbis?'':'(exento)';
   document.getElementById('tot-box').innerHTML=`<div class="tot-box">
     <div class="trf"><div class="trf-label">Subtotal <span class="cx ${MCLS[mon]||'cx-usd'}" style="margin-left:6px">${mon}</span></div><span>${sym}${s.toLocaleString('es-DO',{minimumFractionDigits:2})}</span></div>
-    <div class="trf"><span>ITBIS 18%</span><span>${sym}${it.toLocaleString('es-DO',{minimumFractionDigits:2})}</span></div>
+    ${applyItbis?`<div class="trf"><span>ITBIS 18%</span><span>${sym}${it.toLocaleString('es-DO',{minimumFractionDigits:2})}</span></div>`:'<div class="trf" style="opacity:.5"><span>ITBIS</span><span style="font-style:italic;font-size:10px">Exento / No aplica</span></div>'}
     <div class="trf grand"><div class="trf-label">Total ${mon}</div><span>${sym}${t.toLocaleString('es-DO',{minimumFractionDigits:2})}</span></div>
     ${mon!=='USD'?`<div class="trf" style="margin-top:5px;border-top:1px solid rgba(240,235,225,.1);padding-top:5px"><span style="font-size:10px;color:rgba(240,235,225,.4)">≈ USD equiv.</span><span style="font-size:10px;color:rgba(240,235,225,.4)">${fmtUSD(tU)}</span></div>`:''}
   </div>`;
@@ -1224,6 +1239,7 @@ async function saveOC(){
       emisor_depto:document.getElementById('f-emisor-depto').value||null,
       resp_recep:document.getElementById('f-resp-recep').value||null,
       obs:document.getElementById('f-obs').value||null,
+      itbis:!!(document.getElementById('f-itbis')?.checked),
       notas:null,
       ls:lv.map(({id:_,...r})=>r),
       pdf_url,
@@ -1294,7 +1310,7 @@ async function confCancel(id){
 // ── PDF DOCUMENT (redesigned - clean white/black, no green) ──────
 function buildDoc(o){
   const p=gp(o.pv);const mon=o.mon||'USD';const sym=MSYM[mon]||'$';
-  const s=subOC(o);const it=s*ITBIS;const t=s+it;const tU=totUSD(o);
+  const s=subOC(o);const it=o.itbis?s*ITBIS:0;const t=s+it;const tU=totUSD(o);
   const fmt=(v)=>sym+v.toLocaleString('es-DO',{minimumFractionDigits:2,maximumFractionDigits:2});
   const dots='<span class="ptdots"></span>';
   const pago=o.pago||'50% anticipo / 50% contra entrega';
@@ -1376,7 +1392,7 @@ function buildDoc(o){
     <div class="pdf-sec-hdr">RESUMEN FINANCIERO</div>
     <div class="ptot-block">
       <div class="ptot-row"><span>Subtotal</span>${dots}<span>${fmt(s)}</span></div>
-      <div class="ptot-row"><span>ITBIS (18%)</span>${dots}<span>${fmt(it)}</span></div>
+      ${o.itbis?`<div class="ptot-row"><span>ITBIS (18%)</span>${dots}<span>${fmt(it)}</span></div>`:'<div class="ptot-row" style="opacity:.5"><span>ITBIS</span>${dots}<span style="font-style:italic">Exento / No aplica</span></div>'}
       <div class="ptot-row ptot-grand"><span>TOTAL ORDEN</span>${dots}<span>${fmt(t)}</span></div>
       ${mon!=='USD'?`<div class="ptot-row ptot-eq"><span>≈ Equivalente USD</span>${dots}<span>${fmtUSD(tU)}</span></div>`:''}
     </div>
@@ -1524,7 +1540,7 @@ function dlPDF(){
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
     const p=gp(o.pv);const mon=o.mon||'USD';const sym=MSYM[mon]||'$';
-    const s=subOC(o);const it=s*ITBIS;const t=s+it;const tU=totUSD(o);
+    const s=subOC(o);const it=o.itbis?s*ITBIS:0;const t=s+it;const tU=totUSD(o);
     // Clean white header with black rule
     doc.setDrawColor(28,28,24);doc.setLineWidth(0.8);doc.line(10,10,197,10);
     try{doc.addImage(LPDF,'PNG',10,13,28,22);}catch(e){}
@@ -1580,7 +1596,7 @@ function dlPDF(){
     doc.setFillColor(246,243,238);doc.roundedRect(128,fy,69,mon!=='USD'?31:24,2,2,'F');
     doc.setFontSize(9);doc.setTextColor(90,90,90);
     doc.text(`Subtotal (${mon}):`,130,fy+7);doc.text(sym+s.toLocaleString('es-DO',{minimumFractionDigits:2}),196,fy+7,{align:'right'});
-    doc.text('ITBIS 18%:',130,fy+13);doc.text(sym+it.toLocaleString('es-DO',{minimumFractionDigits:2}),196,fy+13,{align:'right'});
+    if(o.itbis){doc.text('ITBIS 18%:',130,fy+13);doc.text(sym+it.toLocaleString('es-DO',{minimumFractionDigits:2}),196,fy+13,{align:'right'});}else{doc.setFont('helvetica','italic');doc.text('ITBIS: Exento',130,fy+13);doc.setFont('helvetica','normal');}
     doc.setDrawColor(180,175,165);doc.setLineWidth(0.4);doc.line(130,fy+17,196,fy+17);
     doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(28,28,24);
     doc.text(`Total ${mon}:`,130,fy+23);doc.text(sym+t.toLocaleString('es-DO',{minimumFractionDigits:2}),196,fy+23,{align:'right'});
